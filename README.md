@@ -1,0 +1,66 @@
+# Sensirion SPS30
+
+## Introduction
+
+Python-based driver for [Sensirion SPS30](https://www.sensirion.com/en/environmental-sensors/particulate-matter-sensors-pm25/) particulate matter sensor. Tested on Raspberry Pi Zero/Zero W/3B+/4B.
+
+### Example
+
+```python
+import sys
+import json
+from time import sleep
+from sps30 import SPS30
+
+
+if __name__ == "__main__":
+    pm_sensor = SPS30()
+    print(f"Firmware version: {pm_sensor.firmware_version()}")
+    print(f"Product type: {pm_sensor.product_type()}")
+    print(f"Serial number: {pm_sensor.serial_number()}")
+    print(f"Status register: {pm_sensor.read_status_register()}")
+    print(
+        f"Auto cleaning interval: {pm_sensor.read_auto_cleaning_interval()}s")
+    pm_sensor.start_measurement()
+
+    while True:
+        try:
+            print(json.dumps(pm_sensor.get_measurement(), indent=2))
+            sleep(2)
+
+        except KeyboardInterrupt:
+            print("Stopping measurement...")
+            pm_sensor.stop_measurement()
+            sys.exit()
+```
+
+### Output data format  
+
+```json
+{
+  "sensor_data": {
+    "mass_density": {
+      "pm1.0": 1.883,
+      "pm2.5": 3.889,
+      "pm4.0": 6.232,
+      "pm10": 6.7
+    },
+    "particle_count": {
+      "pm0.5": 1.302,
+      "pm1.0": 4.595,
+      "pm2.5": 7.326,
+      "pm4.0": 7.864,
+      "pm10": 7.967
+    },
+    "particle_size": 1.63,
+    "mass_density_unit": "ug/m3",
+    "particle_count_unit": "#/cm3",
+    "particle_size_unit": "um"
+  },
+  "timestamp": 1630217804
+}
+```
+
+### Dependencies
+
+None
