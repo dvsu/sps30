@@ -1,10 +1,10 @@
 import io
 from fcntl import ioctl
 
+I2C_SLAVE = 0x0703
+
 
 class I2C:
-
-    I2C_SLAVE = 0x0703
 
     def __init__(self, bus: int, address: int):
 
@@ -12,8 +12,8 @@ class I2C:
         self.fw = io.open("/dev/i2c-"+str(bus), "wb", buffering=0)
 
         # set device address
-        ioctl(self.fr, self.I2C_SLAVE, address)
-        ioctl(self.fw, self.I2C_SLAVE, address)
+        ioctl(self.fr, I2C_SLAVE, address)
+        ioctl(self.fw, I2C_SLAVE, address)
 
     def write(self, data: list):
         self.fw.write(bytearray(data))
