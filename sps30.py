@@ -8,7 +8,7 @@ from i2c.i2c import I2C
 
 class SPS30:
 
-    def __init__(self,  bus:int = 1, address:int = 0x69, sampling_period:int = 1, logger:str = None):
+    def __init__(self,  bus: int = 1, address: int = 0x69, sampling_period: int = 1, logger: str = None):
         self.logger = None
         if logger:
             self.logger = logging.getLogger(logger)
@@ -31,8 +31,8 @@ class SPS30:
                     crc = (crc << 1) ^ 0x31
                 else:
                     crc = crc << 1
-        
-        # The checksum only contains 8-bit, 
+
+        # The checksum only contains 8-bit,
         # so the calculated value has to be masked with 0xFF
         return (crc & 0x0000FF)
 
@@ -44,7 +44,7 @@ class SPS30:
             return "CRC mismatched"
 
         return ".".join(map(str, data[:2]))
-    
+
     def product_type(self) -> str:
         self.i2c.write([0xD0, 0x02])
         data = self.i2c.read(12)
@@ -53,11 +53,11 @@ class SPS30:
         for i in range(0, 12, 3):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
                 return "CRC mismatched"
-            
+
             result += "".join(map(chr, data[i:i+2]))
 
         return result
-    
+
     def serial_number(self) -> str:
         self.i2c.write([0xD0, 0x33])
         data = self.i2c.read(48)
@@ -66,7 +66,7 @@ class SPS30:
         for i in range(0, 48, 3):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
                 return "CRC mismatched"
-            
+
             result += "".join(map(chr, data[i:i+2]))
 
         return result
@@ -79,9 +79,9 @@ class SPS30:
         for i in range(0, 6, 3):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
                 return "CRC mismatched"
-            
+
             interval.extend(data[i:i+2])
-        
+
         return (interval[0] << 24 | interval[1] << 16 | interval[2] << 8 | interval[3])
 
     def read_status_register(self) -> dict:
@@ -92,14 +92,15 @@ class SPS30:
         for i in range(0, 6, 3):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
                 return "CRC mismatched"
-            
+
             status.extend(data[i:i+2])
 
-        binary = '{:032b}'.format(status[0] << 24 | status[1] << 16 | status[2] << 8 | status[3])
+        binary = '{:032b}'.format(
+            status[0] << 24 | status[1] << 16 | status[2] << 8 | status[3])
         speed_status = "too high/ too low" if int(binary[10]) == 1 else "ok"
         laser_status = "out of range" if int(binary[26]) == 1 else "ok"
         fan_status = "0 rpm" if int(binary[27]) == 1 else "ok"
-        
+
         return {
             "speed_status": speed_status,
             "laser_status": laser_status,
@@ -115,10 +116,18 @@ class SPS30:
 
         if self.crc_calc(data[:2]) != data[2]:
             if self.logger:
-                self.logger.warning(f"'read_data_ready_flag' CRC mismatched! Data: {data[:2]} Calculated CRC: {self.crc_calc(data[:2])} Expected: {data[2]}")
+                self.logger.warning(
+                    "'read_data_ready_flag' CRC mismatched!" +
+                    f"  Data: {data[:2]}" +
+                    f"  Calculated CRC: {self.crc_calc(data[:2])}" +
+                    f"  Expected: {data[2]}")
             else:
-                print(f"'read_data_ready_flag' CRC mismatched! Data: {data[:2]} Calculated CRC: {self.crc_calc(data[:2])} Expected: {data[2]}")
-            
+                print(
+                    "'read_data_ready_flag' CRC mismatched!" +
+                    f"  Data: {data[:2]}" +
+                    f"  Calculated CRC: {self.crc_calc(data[:2])}" +
+                    f"  Expected: {data[2]}")
+
             return False
 
         return True if data[1] == 1 else False
@@ -130,20 +139,20 @@ class SPS30:
         self.i2c.write([0xD3, 0x04])
 
     def __ieee754_number_conversion(self, data: int) -> float:
-        binary = "{:032b}".format(data) 
+        binary = "{:032b}".format(data)
 
         sign = int(binary[0:1])
         exp = int(binary[1:9], 2) - 127
         exp = 0 if exp < 0 else exp
         mantissa = binary[9:]
-        
+
         real = int(('1' + mantissa[:exp]), 2)
-        decimal = mantissa[exp:] 
+        decimal = mantissa[exp:]
 
         dec = 0.0
         for i in range(len(decimal)):
             dec += int(decimal[i]) / (2**(i+1))
-        
+
         return round((((-1)**(sign) * real) + dec), 3)
 
     def __mass_density_measurement(self, data: list) -> dict:
@@ -151,7 +160,7 @@ class SPS30:
 
         density = {
             "pm1.0": 0.0,
-            "pm2.5": 0.0, 
+            "pm2.5": 0.0,
             "pm4.0": 0.0,
             "pm10": 0.0
         }
@@ -162,16 +171,24 @@ class SPS30:
                 offset = (block*6)+i
                 if self.crc_calc(data[offset:offset+2]) != data[offset+2]:
                     if self.logger:
-                        self.logger.warning(f"'__mass_density_measurement' CRC mismatched! Data: {data[offset:offset+2]} Calculated CRC: {self.crc_calc(data[offset:offset+2])} Expected: {data[offset+2]}")
+                        self.logger.warning(
+                            "'__mass_density_measurement' CRC mismatched!" +
+                            f"  Data: {data[offset:offset+2]}" +
+                            f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" +
+                            f"  Expected: {data[offset+2]}")
                     else:
-                        print(f"'__mass_density_measurement' CRC mismatched! Data: {data[offset:offset+2]} Calculated CRC: {self.crc_calc(data[offset:offset+2])} Expected: {data[offset+2]}")
-
+                        print(
+                            "'__mass_density_measurement' CRC mismatched!" +
+                            f"  Data: {data[offset:offset+2]}" +
+                            f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" +
+                            f"  Expected: {data[offset+2]}")
                     self.__valid["mass_density"] = False
                     return {}
 
                 pm_data.extend(data[offset:offset+2])
 
-            density[pm] = self.__ieee754_number_conversion(pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
+            density[pm] = self.__ieee754_number_conversion(
+                pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
 
         self.__valid["mass_density"] = True
 
@@ -183,7 +200,7 @@ class SPS30:
         count = {
             "pm0.5": 0.0,
             "pm1.0": 0.0,
-            "pm2.5": 0.0, 
+            "pm2.5": 0.0,
             "pm4.0": 0.0,
             "pm10": 0.0
         }
@@ -194,16 +211,25 @@ class SPS30:
                 offset = (block*6)+i
                 if self.crc_calc(data[offset:offset+2]) != data[offset+2]:
                     if self.logger:
-                        self.logger.warning(f"'__particle_count_measurement' CRC mismatched! Data: {data[offset:offset+2]} Calculated CRC: {self.crc_calc(data[offset:offset+2])} Expected: {data[offset+2]}")
+                        self.logger.warning(
+                            "'__particle_count_measurement' CRC mismatched!" +
+                            f"  Data: {data[offset:offset+2]}" +
+                            f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" +
+                            f"  Expected: {data[offset+2]}")
                     else:
-                        print(f"'__particle_count_measurement' CRC mismatched! Data: {data[offset:offset+2]} Calculated CRC: {self.crc_calc(data[offset:offset+2])} Expected: {data[offset+2]}")
+                        print(
+                            "'__particle_count_measurement' CRC mismatched!" +
+                            f"  Data: {data[offset:offset+2]}" +
+                            f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" +
+                            f"  Expected: {data[offset+2]}")
 
                     self.__valid["particle_count"] = False
                     return {}
 
                 pm_data.extend(data[offset:offset+2])
 
-            count[pm] = self.__ieee754_number_conversion(pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
+            count[pm] = self.__ieee754_number_conversion(
+                pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
 
         self.__valid["particle_count"] = True
 
@@ -214,9 +240,17 @@ class SPS30:
         for i in range(0, 6, 3):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
                 if self.logger:
-                    self.logger.warning(f"'__particle_size_measurement' CRC mismatched! Data: {data[i:i+2]} Calculated CRC: {self.crc_calc(data[i:i+2])} Expected: {data[i+2]}")
+                    self.logger.warning(
+                        "'__particle_size_measurement' CRC mismatched!" +
+                        f"  Data: {data[i:i+2]}" +
+                        f"  Calculated CRC: {self.crc_calc(data[i:i+2])}" +
+                        f"  Expected: {data[i+2]}")
                 else:
-                    print(f"'__particle_size_measurement' CRC mismatched! Data: {data[i:i+2]} Calculated CRC: {self.crc_calc(data[i:i+2])} Expected: {data[i+2]}")
+                    print(
+                        "'__particle_size_measurement' CRC mismatched!" +
+                        f"  Data: {data[i:i+2]}" +
+                        f"  Calculated CRC: {self.crc_calc(data[i:i+2])}" +
+                        f"  Expected: {data[i+2]}")
 
                 self.__valid["particle_size"] = False
                 return 0.0
@@ -274,7 +308,7 @@ class SPS30:
             "unsigned_16_bit_integer": 0x05
         }
 
-        data = [0x00, 0x10] 
+        data = [0x00, 0x10]
         data.extend([data_format["IEEE754_float"], 0x00])
         data.append(self.crc_calc(data[2:4]))
         self.i2c.write(data)
@@ -293,4 +327,3 @@ class SPS30:
 
     def __run(self) -> None:
         threading.Thread(target=self.__read_sensor_data, daemon=True).start()
-    

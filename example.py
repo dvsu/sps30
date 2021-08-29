@@ -10,7 +10,8 @@ if __name__ == "__main__":
     print(f"Product type: {pm_sensor.product_type()}")
     print(f"Serial number: {pm_sensor.serial_number()}")
     print(f"Status register: {pm_sensor.read_status_register()}")
-    print(f"Auto cleaning interval: {pm_sensor.read_auto_cleaning_interval()}s")
+    print(
+        f"Auto cleaning interval: {pm_sensor.read_auto_cleaning_interval()}s")
     pm_sensor.start_measurement()
 
     while True:
