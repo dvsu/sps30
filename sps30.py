@@ -3,6 +3,7 @@ import threading
 import logging
 from time import sleep
 from queue import Queue
+from datetime import datetime
 from i2c.i2c import I2C
 
 # I2C commands
@@ -313,12 +314,15 @@ class SPS30:
                     self.__data.get()
 
                 result = {
-                    "mass_density": self.__mass_density_measurement(data[:24]),
-                    "particle_count": self.__particle_count_measurement(data[24:54]),
-                    "particle_size": self.__particle_size_measurement(data[54:]),
-                    "mass_density_unit": "ug/m3",
-                    "particle_count_unit": "#/cm3",
-                    "particle_size_unit": "um"
+                    "sensor_data": {
+                        "mass_density": self.__mass_density_measurement(data[:24]),
+                        "particle_count": self.__particle_count_measurement(data[24:54]),
+                        "particle_size": self.__particle_size_measurement(data[54:]),
+                        "mass_density_unit": "ug/m3",
+                        "particle_count_unit": "#/cm3",
+                        "particle_size_unit": "um"
+                    },
+                    "timestamp": int(datetime.now().timestamp())
                 }
 
                 self.__data.put(result if all(self.__valid.values()) else {})
