@@ -4,7 +4,51 @@
 
 Python-based driver for [Sensirion SPS30](https://www.sensirion.com/en/environmental-sensors/particulate-matter-sensors-pm25/) particulate matter sensor. Tested on Raspberry Pi Zero/Zero W/3B+/4B.
 
+### Wiring
+
+#### Sensor
+
+```none
+                                 Pin 1   Pin 5
+                                   |       |
+                                   V       V
+.------------------------------------------------.
+|                                .-----------.   |
+|                                | x x x x x |   |
+|                                '-----------'   |
+|     []          []          []          []     |
+'------------------------------------------------'
+```
+
+| Pin | Description                                       | UART | I2C |
+| :-: | :------------------------------------------------ | ---- | --- |
+|  1  | Supply voltage 5V                                 | VDD  | VDD |
+|  2  | UART receiving pin/ I2C serial data input/ output | RX   | SDA |
+|  3  | UART transmitting pin/ I2C serial clock input     | TX   | SCL |
+|  4  | Interface select (UART: floating (NC) /I2C: GND)  | NC   | GND |
+|  5  | Ground                                            | GND  | GND |
+
+#### I2C Interface
+
+```none
+  Sensor Pins                                 Raspberry Pi Pins
+.-------.-----.                             .----------.---------.
+| Pin 1 | VDD |-----------------------------|    5V    | Pin 2/4 |
+| Pin 2 | SDA |-----------------------------| I2C1 SDA |  Pin 3  |
+| Pin 3 | SCL |-----------------------------| I2C1 SCL |  Pin 5  |
+| Pin 4 | GND |-----.                       |          |         |
+| Pin 5 | GND |-----'-----------------------|   GND    | Pin 6/9 |
+'-------'-----'                             '----------'---------'
+```
+
 ### Example
+
+Default parameters of `SPS30` class
+
+| Parameter | Value | Description             |
+| --------- | ----- | ----------------------- |
+| bus       | 1     | I2C bus of Raspberry Pi |
+| address   | 0x69  | Default I2C address     |
 
 ```python
 import sys
@@ -34,7 +78,7 @@ if __name__ == "__main__":
             sys.exit()
 ```
 
-### Output data format  
+### Output data format
 
 ```json
 {
