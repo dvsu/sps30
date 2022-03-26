@@ -175,6 +175,22 @@ class SPS30:
 
         return (interval[0] << 24 | interval[1] << 16 | interval[2] << 8 | interval[3])
 
+    def write_auto_cleaning_interval_days(self, days: int) -> int:
+        seconds = days * 86400  # 1day = 86400sec
+        interval = []
+        interval.append((seconds & 0xff000000) >> 24)
+        interval.append((seconds & 0x00ff0000) >> 16)
+        interval.append((seconds & 0x0000ff00) >> 8)
+        interval.append(seconds & 0x000000ff)
+        data = CMD_AUTO_CLEANING_INTERVAL
+        data.extend([interval[0], interval[1]])
+        data.append(self.crc_calc(data[2:4]))
+        data.extend([interval[2], interval[3]])
+        data.append(self.crc_calc(data[5:7]))
+        self.i2c.write(data)
+        sleep(0.05)
+        return self.read_auto_cleaning_interval()
+
     def reset(self) -> None:
         self.i2c.write(CMD_RESET)
 
