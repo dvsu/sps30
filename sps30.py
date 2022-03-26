@@ -183,7 +183,12 @@ class SPS30:
 
         sign = int(binary[0:1])
         exp = int(binary[1:9], 2) - 127
-        exp = 0 if exp < 0 else exp
+
+        divider = 0
+        if exp < 0:
+            divider = abs(exp)
+            exp = 0
+
         mantissa = binary[9:]
 
         real = int(('1' + mantissa[:exp]), 2)
@@ -193,7 +198,10 @@ class SPS30:
         for i in range(len(decimal)):
             dec += int(decimal[i]) / (2**(i+1))
 
-        return round((((-1)**(sign) * real) + dec), 3)
+        if divider == 0:
+            return round((((-1)**(sign) * real) + dec), 3)
+        else:
+            return round((((-1)**(sign) * real) + dec) / pow(2, divider), 3)
 
     def __mass_density_measurement(self, data: list) -> dict:
         category = ["pm1.0", "pm2.5", "pm4.0", "pm10"]
