@@ -20,8 +20,9 @@ jobs:
         id: local_version
         run: |
           # Extracts version from pyproject.toml using uv
-          VERSION=$(uv tree --depth 0 | grep -oP '\(v\K[0-9.]+')
+          VERSION=$(grep -m 1 '^version = ' pyproject.toml | cut -d '"' -f 2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected local version: $VERSION"
 
       - name: Check PyPI Version
         id: pypi_check
