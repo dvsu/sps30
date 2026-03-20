@@ -1,0 +1,42 @@
+[project]
+name = "sensirion-sps30"
+version = "0.1.0"
+description = "Python-based driver for Sensirion SPS30 particulate matter sensor over I2C"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "David", email = "imdavidsu@gmail.com" }
+]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sps30"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.7",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C4", # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pyright]
+extraPaths = ["src"]
