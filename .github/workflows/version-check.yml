@@ -1,0 +1,38 @@
+name: Version Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "pyproject.toml"
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Get Local Version
+        id: local_version
+        run: |
+          # Extracts version from pyproject.toml using uv
+          VERSION=$(uv tree --depth 0 | grep -oP '\(v\K[0-9.]+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check PyPI Version
+        id: pypi_check
+        run: |
+          PACKAGE_NAME=$(grep -m 1 "name =" pyproject.toml | cut -d '"' -f 2)
+          # Query PyPI API for the latest version
+          LATEST_PYPI=$(curl -s https://pypi.org/pypi/$PACKAGE_NAME/json | jq -r '.info.version' || echo "0.0.0")
+
+          if [ "${{ steps.local_version.outputs.version }}" == "$LATEST_PYPI" ]; then
+            echo "Version ${{ steps.local_version.outputs.version }} already exists on PyPI!"
+            exit 1
+          else
+            echo "Version bump detected: $LATEST_PYPI -> ${{ steps.local_version.outputs.version }}"
+          fi
